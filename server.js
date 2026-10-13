@@ -76,7 +76,7 @@ app.post("/api/chat", chatLimiter, async (req, res) => {
     }
 
     const completion = await groq.chat.completions.create({
-      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+      model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
       messages: [
         {
           role: "system",
