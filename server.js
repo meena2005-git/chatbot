@@ -98,8 +98,8 @@ app.post("/api/chat", chatLimiter, async (req, res) => {
       reply: reply || "Sorry, I could not generate a reply.",
     });
   } catch (error) {
-    console.error("Groq API error:", error.status || error.message);
-
+    console.error("Groq API error details:", error.status, error.message);
+      
     return res.status(500).json({
       error: "Unable to get an AI reply. Please try again.",
     });
