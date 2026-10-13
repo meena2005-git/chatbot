@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const express = require("express");
@@ -9,7 +8,10 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Connect to Groq using a secret environment variable.
+// Trust the Vercel proxy.
+app.set("trust proxy", 1);
+
+// Connect to Groq using the secret environment variable.
 const groq = process.env.GROQ_API_KEY
   ? new OpenAI({
       apiKey: process.env.GROQ_API_KEY,
@@ -22,16 +24,12 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const chatLimiter = rateLimit({
   windowMs: 60 * 1000,
-    limit: 10,
-      standardHeaders: true,
-        legacyHeaders: false,
-          validate: {
-              xForwardedForHeader: false,
-                },
-                });
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-
-// Check whether the backend is running.
+// Backend health check.
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
@@ -39,7 +37,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Chat with Groq AI.
+// Chat endpoint.
 app.post("/api/chat", chatLimiter, async (req, res) => {
   try {
     if (!groq) {
@@ -98,15 +96,19 @@ app.post("/api/chat", chatLimiter, async (req, res) => {
       reply: reply || "Sorry, I could not generate a reply.",
     });
   } catch (error) {
-    console.error("Groq API error details:", error.status, error.message);
-      
+    // Do not log the API key.
+    console.error("Groq API error details:", {
+      status: error.status,
+      message: error.message,
+    });
+
     return res.status(500).json({
       error: "Unable to get an AI reply. Please try again.",
     });
   }
 });
 
-// Return a JSON error for unknown API routes.
+// JSON response for unknown API routes.
 app.use("/api", (req, res) => {
   res.status(404).json({
     error: "API route not found.",
